@@ -10,6 +10,11 @@ namespace Microsoft.Framework.Runtime.Json
 
         public JsonObject(IDictionary<string, object> data)
         {
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
             _data = data;
         }
 
@@ -58,16 +63,7 @@ namespace Microsoft.Framework.Runtime.Json
         {
             return ValueAs<JsonObject>(key, value =>
             {
-                var dict = value as IDictionary<string, object>;
-
-                if (dict == null)
-                {
-                    return null;
-                }
-                else
-                {
-                    return new JsonObject(dict);
-                }
+                return value as JsonObject;
             });
         }
 

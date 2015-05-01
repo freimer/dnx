@@ -57,38 +57,39 @@ namespace Microsoft.Framework.Runtime.Tests
             var target = new JsonDeserializer();
 
             var raw = target.Deserialize(@"
-{
-    ""key1"": ""value1"",
-    ""key2"": 99,
-    ""key3"": true,
-    ""key4"": [""str1"", ""str2"", ""str3""],
-    ""key5"": {
-        ""subkey1"": ""subvalue1"",
-        ""subkey2"": [1, 2]
-    }
-}");
+            {
+                ""key1"": ""value1"",
+                ""key2"": 99,
+                ""key3"": true,
+                ""key4"": [""str1"", ""str2"", ""str3""],
+                ""key5"": {
+                    ""subkey1"": ""subvalue1"",
+                    ""subkey2"": [1, 2]
+                }
+            }");
+
             Assert.NotNull(raw);
 
-            var dict = raw as IDictionary<string, object>;
+            var dict = raw as JsonObject;
             Assert.NotNull(dict);
-            Assert.Equal("value1", (string)dict["key1"]);
-            Assert.Equal(99, (int)dict["key2"]);
-            Assert.Equal(true, (bool)dict["key3"]);
+            Assert.Equal("value1", dict.ValueAsString("key1"));
+            Assert.Equal(99, (int)dict.Value("key2"));
+            Assert.Equal(true, dict.ValueAsBoolean("key3"));
 
-            var list = dict["key4"] as IList<object>;
+            var list = dict.ValueAs<IList<object>>("key4");
             Assert.NotNull(list);
             Assert.Equal(3, list.Count);
             Assert.Equal("str1", (string)list[0]);
             Assert.Equal("str2", (string)list[1]);
             Assert.Equal("str3", (string)list[2]);
 
-            var jobject = dict["key5"] as IDictionary<string, object>;
+            var jobject = dict.ValueAsJsonObject("key5"); //dict["key5"] as IDictionary<string, object>;
             Assert.NotNull(jobject);
-            Assert.Equal("subvalue1", (string)jobject["subkey1"]);
+            Assert.Equal("subvalue1", jobject.ValueAsString("subkey1"));
 
-            var subArray = jobject["subkey2"] as IList<object>;
+            var subArray = jobject.ValueAsArray<int>("subkey2");
             Assert.NotNull(subArray);
-            Assert.Equal(2, subArray.Count);
+            Assert.Equal(2, subArray.Length);
             Assert.Equal(1, (int)subArray[0]);
             Assert.Equal(2, (int)subArray[1]);
         }

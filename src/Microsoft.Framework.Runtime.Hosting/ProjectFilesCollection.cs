@@ -39,13 +39,11 @@ namespace Microsoft.Framework.Runtime
             throw new System.NotImplementedException();
         }
 
-        public ProjectFilesCollection(IDictionary<string, object> projectContentDictionary,
-                                      string projectDirectory,
-                                      string projectFilePath,
-                                      ICollection<ICompilationMessage> warnings = null)
+        internal ProjectFilesCollection(JsonObject rawProject,
+                                        string projectDirectory,
+                                        string projectFilePath,
+                                        ICollection<ICompilationMessage> warnings = null)
         {
-            var rawProject = new JsonObject(projectContentDictionary);
-
             _projectDirectory = projectDirectory;
             _projectFilePath = projectFilePath;
 

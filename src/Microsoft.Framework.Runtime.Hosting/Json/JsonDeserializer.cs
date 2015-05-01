@@ -30,6 +30,11 @@ namespace Microsoft.Framework.Runtime.Json
             return Deserialize();
         }
 
+        public JsonObject DeserializeAsJsonObject(Stream stream)
+        {
+            return (JsonObject)Deserialize(stream);
+        }
+
         public object Deserialize(string input)
         {
             if (input == null)
@@ -157,7 +162,7 @@ namespace Microsoft.Framework.Runtime.Json
             return list;
         }
 
-        private IDictionary<string, object> DeserializeDictionary(int depth)
+        private JsonObject DeserializeDictionary(int depth)
         {
             IDictionary<string, object> dictionary = null;
 
@@ -235,7 +240,7 @@ namespace Microsoft.Framework.Runtime.Json
                 throw CreateExceptionFromContent(JsonDeserializerResource.JSON_InvalidObject);
             }
 
-            return dictionary;
+            return new JsonObject(dictionary);
         }
 
         // Deserialize a member name.

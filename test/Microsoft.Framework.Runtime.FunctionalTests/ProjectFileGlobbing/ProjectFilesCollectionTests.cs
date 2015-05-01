@@ -520,10 +520,10 @@ namespace Microsoft.Framework.Runtime.FunctionalTests.ProjectFileGlobbing
         protected override IProjectFilesCollection CreateFilesCollection(string jsonContent, string projectDir)
         {
             var deserializer = new JsonDeserializer();
-            var dictionary = deserializer.Deserialize(jsonContent) as IDictionary<string, object>;
+            var rawProject = deserializer.Deserialize(jsonContent) as JsonObject;
 
             projectDir = Path.Combine(Root.DirPath, PathHelper.NormalizeSeparator(projectDir));
-            var filesCollection = new ProjectFilesCollection(dictionary, projectDir, string.Empty);
+            var filesCollection = new ProjectFilesCollection(rawProject, projectDir, string.Empty);
 
             return filesCollection;
         }

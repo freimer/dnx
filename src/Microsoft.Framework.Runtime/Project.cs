@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -166,15 +167,12 @@ namespace Microsoft.Framework.Runtime
             var project = new Project();
 
             var deserializer = new JsonDeserializer();
-            var projectContentDictionary = deserializer.Deserialize(stream) as IDictionary<string, object>;
-
-            if (projectContentDictionary == null)
+            var rawProject = deserializer.DeserializeAsJsonObject(stream);
+            if (rawProject == null)
             {
                 // TODO: add line information
                 throw new FileFormatException("Failed to parse project.json");
             }
-
-            var rawProject = new JsonObject(projectContentDictionary);
 
             // Meta-data properties
             project.Name = projectName;
@@ -247,7 +245,7 @@ namespace Microsoft.Framework.Runtime
             project.Dependencies = new List<LibraryDependency>();
 
             // Project files
-            project.Files = new ProjectFilesCollection(projectContentDictionary,
+            project.Files = new ProjectFilesCollection(rawProject,
                                                        project.ProjectDirectory,
                                                        project.ProjectFilePath,
                                                        diagnostics);
@@ -263,39 +261,42 @@ namespace Microsoft.Framework.Runtime
                 project.CompilerServices = new CompilerServices(languageName, compiler);
             }
 
-            project.Commands = rawProject.ValueAs<IDictionary<string, string>>("commands", value =>
+            project.Commands = rawProject.ValueAs("commands", value =>
             {
-                var dict = value as IDictionary<string, object>;
-                if (dict != null)
+                var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                var jsonObject = value as JsonObject;
+                if (jsonObject != null)
                 {
-                    return dict.Where(pair => pair.Value is string)
-                               .ToDictionary(keySelector: pair => pair.Key,
-                                             elementSelector: pair => pair.Value as string,
-                                             comparer: StringComparer.OrdinalIgnoreCase);
+                    foreach (var key in jsonObject.Keys)
+                    {
+                        var v = jsonObject.ValueAsString(key);
+                        if (v != null)
+                        {
+                            result[key] = v;
+                        }
+                    }
                 }
-                else
-                {
-                    return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                }
+
+                return result;
             });
 
-            project.Scripts = rawProject.ValueAs<IDictionary<string, IEnumerable<string>>>("scripts", value =>
+            project.Scripts = rawProject.ValueAs("scripts", value =>
             {
-                var dict = value as IDictionary<string, object>;
-                if (dict != null)
-                {
-                    var result = new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase);
+                var result = new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase);
 
-                    var jsonobject = new JsonObject(dict);
-                    foreach (var key in dict.Keys)
+                var jsonObject = value as JsonObject;
+                if (jsonObject != null)
+                {
+                    foreach (var key in jsonObject.Keys)
                     {
-                        var stringValue = jsonobject.ValueAsString(key);
+                        var stringValue = jsonObject.ValueAsString(key);
                         if (stringValue != null)
                         {
                             result[key] = new string[] { stringValue };
                         }
 
-                        var arrayValue = jsonobject.ValueAsArray<string>(key);
+                        var arrayValue = jsonObject.ValueAsArray<string>(key);
                         if (arrayValue != null)
                         {
                             result[key] = arrayValue;
@@ -309,13 +310,9 @@ namespace Microsoft.Framework.Runtime
                             project.ProjectFilePath);
                         */
                     }
+                }
 
-                    return result;
-                }
-                else
-                {
-                    return new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase);
-                }
+                return result;
             });
 
             project.BuildTargetFrameworksAndConfigurations(rawProject);

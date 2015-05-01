@@ -111,11 +111,10 @@ namespace Microsoft.Framework.Runtime.Tests.FileGlobbing
             Assert.Equal(NormalizePatterns("*.cs", "../*.cs", "**/*.cpp", "**/*.h"), target.CompilePatternsGroup.IncludePatterns);
         }
 
-        private IDictionary<string, object> Deserialize(string content)
+        private JsonObject Deserialize(string content)
         {
             var deserializer = new JsonDeserializer();
-            var dictionary = deserializer.Deserialize(content) as IDictionary<string, object>;
-            return dictionary;
+            return deserializer.Deserialize(content) as JsonObject;
         }
 
         private IEnumerable<string> NormalizePatterns(params string[] patterns)
