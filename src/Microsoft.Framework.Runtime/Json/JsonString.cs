@@ -15,6 +15,11 @@ namespace Microsoft.Framework.Runtime.Json
         {
             _content = content;
         }
+        
+        public int Index 
+        {
+            get { return _index; }    
+        }
 
         public Nullable<char> GetNextNonEmptyChar()
         {

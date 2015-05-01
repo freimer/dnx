@@ -17,7 +17,6 @@ namespace Microsoft.Framework.Runtime
         public FileFormatException(string message, Exception innerException) :
             base(message, innerException)
         {
-
         }
 
         public string Path { get; private set; }
@@ -33,6 +32,29 @@ namespace Microsoft.Framework.Runtime
             }
 
             return this;
+        }
+        
+        public FileFormatException WithFilePath(string path)
+        {
+            if (path == null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+            
+            this.Path = path;
+            
+            return this;
+        }
+                
+        public static FileFormatException Create(string message, int lineNumber, int linePosition)
+        {
+            var result = new FileFormatException(message)
+            {
+                Line = lineNumber,
+                Column = linePosition
+            };
+            
+            return result;
         }
 
         public static FileFormatException Create(Exception exception, JToken value, string path)

@@ -92,5 +92,8 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal(1, (int)subArray[0]);
             Assert.Equal(2, (int)subArray[1]);
         }
+        
+        [Fact]
+        public void 
     }
 }

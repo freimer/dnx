@@ -17,7 +17,7 @@ namespace Microsoft.Framework.Runtime.Json
         private const int _maxInputLength = 2097152;
 
         private JsonString _input;
-
+                
         public object Deserialize(string input)
         {
             if (input == null)
@@ -66,7 +66,7 @@ namespace Microsoft.Framework.Runtime.Json
         {
             if (++depth > _maxDeserializeDepth)
             {
-                throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_DepthLimitExceeded));
+                throw new FileFormatException(_input.GetDebugString(JsonDeserializerResource.JSON_DepthLimitExceeded));
             }
 
             var nextChar = _input.GetNextNonEmptyChar();
