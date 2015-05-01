@@ -45,13 +45,13 @@ namespace Microsoft.Framework.Runtime
             
             return this;
         }
-                
-        public static FileFormatException Create(string message, int lineNumber, int linePosition)
+
+        public static FileFormatException Create(string message, int line, int column)
         {
             var result = new FileFormatException(message)
             {
-                Line = lineNumber,
-                Column = linePosition
+                Line = line,
+                Column = column
             };
             
             return result;

@@ -65,13 +65,19 @@ namespace Microsoft.Framework.Runtime.Json
 
         public int TotalLines { get { return _content.Count; } }
 
+        /// <summary>
+        /// Current line number in zero-based index.
+        /// </summary>
         public int CurrentLine { get; private set; } = 0;
 
-        public int CurrentPosition { get; private set; } = -1;
+        /// <summary>
+        /// Current column number in zero-based index.
+        /// </summary>
+        public int CurrentColumn { get; private set; } = -1;
 
         public char CurrentChar
         {
-            get { return _content[CurrentLine][CurrentPosition]; }
+            get { return _content[CurrentLine][CurrentColumn]; }
         }
 
         public bool ValidCursor
@@ -80,19 +86,14 @@ namespace Microsoft.Framework.Runtime.Json
             {
                 return CurrentLine < _content.Count &&
                        CurrentLine >= 0 &&
-                       CurrentPosition < _content[CurrentLine].Length &&
-                       CurrentPosition >= 0;
+                       CurrentColumn < _content[CurrentLine].Length &&
+                       CurrentColumn >= 0;
             }
-        }
-
-        public bool IsCurrentNonEmptyChar
-        {
-            get { return char.IsWhiteSpace(_content[CurrentChar][CurrentPosition]) == false; }
         }
 
         public bool Started
         {
-            get { return CurrentLine != 0 || CurrentPosition != -1; }
+            get { return CurrentLine != 0 || CurrentColumn != -1; }
         }
 
         /// <summary>
@@ -103,9 +104,9 @@ namespace Microsoft.Framework.Runtime.Json
         {
             while (TotalLines > CurrentLine)
             {
-                while (_content[CurrentLine].Length > CurrentPosition + 1)
+                while (_content[CurrentLine].Length > CurrentColumn + 1)
                 {
-                    char c = _content[CurrentLine][++CurrentPosition];
+                    char c = _content[CurrentLine][++CurrentColumn];
                     if (!char.IsWhiteSpace(c))
                     {
                         return true;
@@ -113,7 +114,7 @@ namespace Microsoft.Framework.Runtime.Json
                 }
 
                 CurrentLine++;
-                CurrentPosition = -1;
+                CurrentColumn = -1;
             }
 
             return false;
@@ -125,9 +126,9 @@ namespace Microsoft.Framework.Runtime.Json
         /// <returns>Returns false if the cursor reach the end of the content.</returns>
         public bool MoveNext()
         {
-            if (CurrentPosition + 1 < _content[CurrentLine].Length)
+            if (CurrentColumn + 1 < _content[CurrentLine].Length)
             {
-                CurrentPosition += 1;
+                CurrentColumn += 1;
                 return true;
             }
             else
@@ -145,7 +146,7 @@ namespace Microsoft.Framework.Runtime.Json
                 else
                 {
                     CurrentLine = targetLine;
-                    CurrentPosition = 0;
+                    CurrentColumn = 0;
                     return true;
                 }
             }
@@ -157,20 +158,20 @@ namespace Microsoft.Framework.Runtime.Json
         /// <returns>Returns false if the cursor reach it's inital position at [0, -1]</returns>
         public bool MovePrev()
         {
-            if (CurrentPosition - 1 >= 0)
+            if (CurrentColumn - 1 >= 0)
             {
-                CurrentPosition -= 1;
+                CurrentColumn -= 1;
                 return true;
             }
-            else if (CurrentLine == 0 && CurrentPosition == 0)
+            else if (CurrentLine == 0 && CurrentColumn == 0)
             {
                 /// If cursor at [Line:0, Column:0] current then allow it to 
                 /// move into the position ahead of it. Therefore it allows the 
                 /// first MoveNext or MoveToNextNonEmptyChar to be functional
-                CurrentPosition = -1;
+                CurrentColumn = -1;
                 return true;
             }
-            else if (CurrentLine == 0 && CurrentPosition == -1)
+            else if (CurrentLine == 0 && CurrentColumn == -1)
             {
                 return false;
             }
@@ -187,13 +188,13 @@ namespace Microsoft.Framework.Runtime.Json
                 {
                     // Even the first line is empty, move it to the initial position.
                     CurrentLine = 0;
-                    CurrentPosition = -1;
+                    CurrentColumn = -1;
                     return true;
                 }
                 else
                 {
                     CurrentLine = targetLine;
-                    CurrentPosition = _content[CurrentLine].Length - 1;
+                    CurrentColumn = _content[CurrentLine].Length - 1;
                     return true;
                 }
             }
@@ -205,7 +206,7 @@ namespace Microsoft.Framework.Runtime.Json
         public string GetStatusInfo(string message = null)
         {
             return string.Format(@"{0} at [Line: {1}, Column: {2}, Char: {3}]",
-                message ?? "Status", CurrentLine, CurrentPosition, ValidCursor ? CurrentChar.ToString() : "INVALID");
+                message ?? "Status", CurrentLine, CurrentColumn, ValidCursor ? CurrentChar.ToString() : "INVALID");
         }
     }
 }

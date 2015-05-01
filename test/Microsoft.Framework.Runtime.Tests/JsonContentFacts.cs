@@ -70,12 +70,12 @@ namespace Microsoft.Framework.Runtime.Tests
                 Assert.True(content.MoveToNextNonEmptyChar());
                 Assert.Equal('{', content.CurrentChar);
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
 
                 Assert.True(content.MoveToNextNonEmptyChar());
                 Assert.Equal('}', content.CurrentChar);
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(1, content.CurrentPosition);
+                Assert.Equal(1, content.CurrentColumn);
 
                 Assert.False(content.MoveToNextNonEmptyChar());
             }
@@ -95,12 +95,12 @@ namespace Microsoft.Framework.Runtime.Tests
                 Assert.True(content.MoveToNextNonEmptyChar());
                 Assert.Equal('{', content.CurrentChar);
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
 
                 Assert.True(content.MoveToNextNonEmptyChar());
                 Assert.Equal('"', content.CurrentChar);
                 Assert.Equal(1, content.CurrentLine);
-                Assert.Equal(4, content.CurrentPosition);
+                Assert.Equal(4, content.CurrentColumn);
 
                 for (int i = 0; i < 9; ++i)
                 {
@@ -108,12 +108,12 @@ namespace Microsoft.Framework.Runtime.Tests
                 }
                 Assert.Equal('"', content.CurrentChar);
                 Assert.Equal(1, content.CurrentLine);
-                Assert.Equal(14, content.CurrentPosition);
+                Assert.Equal(14, content.CurrentColumn);
 
                 Assert.True(content.MoveToNextNonEmptyChar());
                 Assert.Equal('v', content.CurrentChar);
                 Assert.Equal(1, content.CurrentLine);
-                Assert.Equal(15, content.CurrentPosition);
+                Assert.Equal(15, content.CurrentColumn);
 
                 for (int i = 0; i < 6; ++i)
                 {
@@ -121,7 +121,7 @@ namespace Microsoft.Framework.Runtime.Tests
                 }
                 Assert.Equal(',', content.CurrentChar);
                 Assert.Equal(1, content.CurrentLine);
-                Assert.Equal(21, content.CurrentPosition);
+                Assert.Equal(21, content.CurrentColumn);
 
                 for (int i = 0; i < 13; ++i)
                 {
@@ -129,12 +129,12 @@ namespace Microsoft.Framework.Runtime.Tests
                 }
                 Assert.Equal('e', content.CurrentChar);
                 Assert.Equal(2, content.CurrentLine);
-                Assert.Equal(17, content.CurrentPosition);
+                Assert.Equal(17, content.CurrentColumn);
 
                 Assert.True(content.MoveToNextNonEmptyChar());
                 Assert.Equal('}', content.CurrentChar);
                 Assert.Equal(3, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
                 Assert.True(content.ValidCursor);
 
                 Assert.False(content.MoveToNextNonEmptyChar());
@@ -166,54 +166,54 @@ jl m n
                 Assert.True(content.Started);
                 Assert.Equal('a', content.CurrentChar);
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
 
                 Assert.True(content.MoveNext());
                 Assert.Equal('b', content.CurrentChar);
                 Assert.Equal(1, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
 
                 Assert.True(content.MoveNext());
                 Assert.Equal('c', content.CurrentChar);
                 Assert.Equal(1, content.CurrentLine);
-                Assert.Equal(1, content.CurrentPosition);
+                Assert.Equal(1, content.CurrentColumn);
 
                 Assert.True(content.MoveNext());
                 Assert.Equal(' ', content.CurrentChar);
                 Assert.Equal(1, content.CurrentLine);
-                Assert.Equal(2, content.CurrentPosition);
+                Assert.Equal(2, content.CurrentColumn);
 
                 Repeat(4, () => Assert.True(content.MoveNext()));
                 Assert.Equal('d', content.CurrentChar);
                 Assert.Equal(2, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
 
                 Repeat(3, () => Assert.True(content.MoveNext()));
                 Assert.Equal(' ', content.CurrentChar);
                 Assert.Equal(3, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
 
                 Repeat(4, () => Assert.True(content.MoveNext()));
                 Assert.Equal('i', content.CurrentChar);
                 Assert.Equal(8, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
 
                 Repeat(5, () => Assert.True(content.MoveNext()));
                 Assert.Equal(' ', content.CurrentChar);
                 Assert.Equal(9, content.CurrentLine);
-                Assert.Equal(4, content.CurrentPosition);
+                Assert.Equal(4, content.CurrentColumn);
 
                 Assert.True(content.MoveNext());
                 Assert.Equal('n', content.CurrentChar);
                 Assert.Equal(9, content.CurrentLine);
-                Assert.Equal(5, content.CurrentPosition);
+                Assert.Equal(5, content.CurrentColumn);
 
                 Assert.False(content.MoveNext());
 
                 // Cursor doesn't move
                 Assert.Equal('n', content.CurrentChar);
                 Assert.Equal(9, content.CurrentLine);
-                Assert.Equal(5, content.CurrentPosition);
+                Assert.Equal(5, content.CurrentColumn);
             }
         }
 
@@ -238,23 +238,23 @@ jl m n
                 Assert.False(content.Started);
 
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(-1, content.CurrentPosition);
+                Assert.Equal(-1, content.CurrentColumn);
 
                 Assert.False(content.MovePrev());
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(-1, content.CurrentPosition);
+                Assert.Equal(-1, content.CurrentColumn);
 
                 Assert.True(content.MoveNext());
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
 
                 Assert.True(content.MovePrev());
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(-1, content.CurrentPosition);
+                Assert.Equal(-1, content.CurrentColumn);
 
                 Assert.False(content.MovePrev());
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(-1, content.CurrentPosition);
+                Assert.Equal(-1, content.CurrentColumn);
 
                 // Move to the end
                 Repeat(21, () => Assert.True(content.MoveNext()));
@@ -263,22 +263,22 @@ jl m n
                 Assert.True(content.MovePrev());
                 Assert.Equal(' ', content.CurrentChar);
                 Assert.Equal(9, content.CurrentLine);
-                Assert.Equal(4, content.CurrentPosition);
+                Assert.Equal(4, content.CurrentColumn);
 
                 Repeat(5, () => Assert.True(content.MovePrev()));
                 Assert.Equal('i', content.CurrentChar);
                 Assert.Equal(8, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
 
                 Assert.True(content.MovePrev());
                 Assert.Equal('h', content.CurrentChar);
                 Assert.Equal(5, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
 
                 Repeat(7, () => Assert.True(content.MovePrev()));
                 Assert.Equal(' ', content.CurrentChar);
                 Assert.Equal(1, content.CurrentLine);
-                Assert.Equal(5, content.CurrentPosition);
+                Assert.Equal(5, content.CurrentColumn);
 
                 Repeat(3, () =>
                 {
@@ -289,15 +289,15 @@ jl m n
                 Repeat(3, () => Assert.True(content.MovePrev()));
                 Assert.Equal('a', content.CurrentChar);
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(0, content.CurrentPosition);
+                Assert.Equal(0, content.CurrentColumn);
 
                 Assert.True(content.MovePrev());
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(-1, content.CurrentPosition);
+                Assert.Equal(-1, content.CurrentColumn);
 
                 Assert.False(content.MovePrev());
                 Assert.Equal(0, content.CurrentLine);
-                Assert.Equal(-1, content.CurrentPosition);
+                Assert.Equal(-1, content.CurrentColumn);
             }
         }
 
