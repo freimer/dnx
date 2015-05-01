@@ -4,36 +4,63 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace Microsoft.Framework.Runtime.Json
 {
     /// <summary>
     /// JsonContent represents a json file and its content 
     /// </summary>
-    public class JsonContent
+    internal class JsonContent
     {
         private List<string> _content = new List<string>();
 
         /// <summary>
         /// Create a JsonContent instance from a stream.
-        /// The consumer is responsible of manage the stream's lifecycle
+        ///
+        /// Once created the JsonContent instance won't keep the handle to the 
+        /// stream nor dispose or close it.
         /// </summary>
         /// <param name="stream">Content source</param>
-        public JsonContent(Stream stream)
+        /// <returns>Newly created JsonContent instance</returns>
+        public static JsonContent CreateFromStream(Stream stream)
         {
             if (stream == null)
             {
                 throw new ArgumentNullException(nameof(stream));
             }
 
+            var content = new List<string>();
             var reader = new StreamReader(stream);
 
             string line = reader.ReadLine();
             while (line != null)
             {
-                _content.Add(line);
+                content.Add(line);
                 line = reader.ReadLine();
             }
+
+            return new JsonContent(content);
+        }
+
+        /// <summary>
+        /// Create a JsonContent instance from a string.
+        /// 
+        /// The string will be feed to a memory string and split into lines.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns>Newly created JsonContent instance</returns>
+        public static JsonContent CreateFromString(string input)
+        {
+            using (var mem = new MemoryStream(Encoding.UTF8.GetBytes(input)))
+            {
+                return CreateFromStream(mem);
+            }
+        }
+
+        private JsonContent(List<string> content)
+        {
+            _content = content;
         }
 
         public int TotalLines { get { return _content.Count; } }
@@ -49,7 +76,13 @@ namespace Microsoft.Framework.Runtime.Json
 
         public bool ValidCursor
         {
-            get { return (_content.Count > CurrentLine) && (_content[CurrentLine].Length > CurrentPosition); }
+            get
+            {
+                return CurrentLine < _content.Count &&
+                       CurrentLine >= 0 &&
+                       CurrentPosition < _content[CurrentLine].Length &&
+                       CurrentPosition >= 0;
+            }
         }
 
         public bool IsCurrentNonEmptyChar
@@ -119,15 +152,27 @@ namespace Microsoft.Framework.Runtime.Json
         }
 
         /// <summary>
-        /// Move the cursor to the previous char
+        /// Move the cursor to the previous char.
         /// </summary>
-        /// <returns>Returns false </returns>
+        /// <returns>Returns false if the cursor reach it's inital position at [0, -1]</returns>
         public bool MovePrev()
         {
             if (CurrentPosition - 1 >= 0)
             {
                 CurrentPosition -= 1;
                 return true;
+            }
+            else if (CurrentLine == 0 && CurrentPosition == 0)
+            {
+                /// If cursor at [Line:0, Column:0] current then allow it to 
+                /// move into the position ahead of it. Therefore it allows the 
+                /// first MoveNext or MoveToNextNonEmptyChar to be functional
+                CurrentPosition = -1;
+                return true;
+            }
+            else if (CurrentLine == 0 && CurrentPosition == -1)
+            {
+                return false;
             }
             else
             {
@@ -140,7 +185,10 @@ namespace Microsoft.Framework.Runtime.Json
 
                 if (targetLine < 0)
                 {
-                    return false;
+                    // Even the first line is empty, move it to the initial position.
+                    CurrentLine = 0;
+                    CurrentPosition = -1;
+                    return true;
                 }
                 else
                 {
@@ -149,6 +197,15 @@ namespace Microsoft.Framework.Runtime.Json
                     return true;
                 }
             }
+        }
+
+        /// <summary>
+        /// Returns a short status message for debugging
+        /// </summary>
+        public string GetStatusInfo(string message = null)
+        {
+            return string.Format(@"{0} at [Line: {1}, Column: {2}, Char: {3}]",
+                message ?? "Status", CurrentLine, CurrentPosition, ValidCursor ? CurrentChar.ToString() : "INVALID");
         }
     }
 }

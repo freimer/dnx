@@ -16,8 +16,20 @@ namespace Microsoft.Framework.Runtime.Json
         private const int _maxDeserializeDepth = 100;
         private const int _maxInputLength = 2097152;
 
-        private JsonString _input;
-                
+        private JsonContent _input;
+
+        public object Deserialize(Stream stream)
+        {
+            if (stream == null)
+            {
+                throw new ArgumentNullException(nameof(stream));
+            }
+
+            _input = JsonContent.CreateFromStream(stream);
+
+            return Deserialize();
+        }
+
         public object Deserialize(string input)
         {
             if (input == null)
@@ -30,13 +42,19 @@ namespace Microsoft.Framework.Runtime.Json
                 throw new ArgumentException(JsonDeserializerResource.JSON_MaxJsonLengthExceeded, nameof(input));
             }
 
-            _input = new JsonString(input);
+            _input = JsonContent.CreateFromString(input);
 
+            return Deserialize();
+        }
+
+        private object Deserialize()
+        {
             object result = DeserializeInternal(0);
 
-            if (_input.GetNextNonEmptyChar() != null)
+            // There are still unprocessed char. The parsing is not finished. Error happened.
+            if (_input.MoveToNextNonEmptyChar() == true)
             {
-                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, JsonDeserializerResource.JSON_IllegalPrimitive, _input.ToString()));
+                throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_IllegalPrimitive));
             }
 
             return result;
@@ -58,23 +76,31 @@ namespace Microsoft.Framework.Runtime.Json
 
         public JsonObject DeserializeAsObject(Stream stream)
         {
-            var reader = new StreamReader(stream);
-            return DeserializeAsObject(reader.ReadToEnd());
+            var dictionary = Deserialize(stream) as IDictionary<string, object>;
+
+            if (dictionary != null)
+            {
+                return new JsonObject(dictionary);
+            }
+            else
+            {
+                return null;
+            }
         }
 
         private object DeserializeInternal(int depth)
         {
             if (++depth > _maxDeserializeDepth)
             {
-                throw new FileFormatException(_input.GetDebugString(JsonDeserializerResource.JSON_DepthLimitExceeded));
+                throw new FileFormatException(_input.GetStatusInfo(JsonDeserializerResource.JSON_DepthLimitExceeded));
             }
 
-            var nextChar = _input.GetNextNonEmptyChar();
-            if (nextChar == null)
+            if (!_input.MoveToNextNonEmptyChar())
             {
                 return null;
             }
 
+            var nextChar = _input.CurrentChar;
             _input.MovePrev();
 
             if (IsNextElementObject(nextChar))
@@ -98,61 +124,88 @@ namespace Microsoft.Framework.Runtime.Json
         private IList<object> DeserializeList(int depth)
         {
             var list = new List<object>();
-            var c = _input.MoveNext();
-            if (c != '[')
+
+            if (!_input.MoveNext())
             {
-                throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_InvalidArrayStart));
+                throw new FileFormatException(_input.GetStatusInfo("Parsing reach the end of the content before it can finish"));
+            }
+
+            if (!_input.ValidCursor)
+            {
+                throw new FileFormatException(_input.GetStatusInfo("Invalid cursor"));
+            }
+
+            if (_input.CurrentChar != '[')
+            {
+                throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_InvalidArrayStart));
             }
 
             bool expectMore = false;
-            while ((c = _input.GetNextNonEmptyChar()) != null && c != ']')
+            while (_input.MoveToNextNonEmptyChar() && _input.CurrentChar != ']')
             {
                 _input.MovePrev();
+
                 object o = DeserializeInternal(depth);
                 list.Add(o);
 
                 expectMore = false;
+
                 // we might be done here.
-                c = _input.GetNextNonEmptyChar();
-                if (c == ']')
+                _input.MoveToNextNonEmptyChar();
+                if (_input.CurrentChar == ']')
                 {
                     break;
                 }
 
                 expectMore = true;
-                if (c != ',')
+                if (_input.CurrentChar != ',')
                 {
-                    throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_InvalidArrayExpectComma));
+                    throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_InvalidArrayExpectComma));
                 }
             }
+
             if (expectMore)
             {
-                throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_InvalidArrayExtraComma));
+                throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_InvalidArrayExtraComma));
             }
-            if (c != ']')
+
+            if (_input.CurrentChar != ']')
             {
-                throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_InvalidArrayEnd));
+                throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_InvalidArrayEnd));
             }
+
             return list;
         }
 
         private IDictionary<string, object> DeserializeDictionary(int depth)
         {
             IDictionary<string, object> dictionary = null;
-            var c = _input.MoveNext();
-            if (c != '{')
+
+            if (!_input.MoveNext())
             {
-                throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_ExpectedOpenBrace));
+                throw new FileFormatException(_input.GetStatusInfo("Parsing reach the end of the content before it can finish"));
+            }
+
+            if (!_input.ValidCursor)
+            {
+                throw new FileFormatException(_input.GetStatusInfo("Invalid cursor"));
+            }
+
+            if (_input.CurrentChar != '{')
+            {
+                throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_ExpectedOpenBrace));
             }
 
             // Loop through each JSON entry in the input object
-            while ((c = _input.GetNextNonEmptyChar()) != null)
+            while (_input.MoveToNextNonEmptyChar())
             {
+                char c = _input.CurrentChar;
+
                 _input.MovePrev();
 
                 if (c == ':')
                 {
-                    throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_InvalidMemberName));
+                    throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_InvalidMemberName));
                 }
 
                 string memberName = null;
@@ -160,10 +213,10 @@ namespace Microsoft.Framework.Runtime.Json
                 {
                     // Find the member name
                     memberName = DeserializeMemberName();
-                    c = _input.GetNextNonEmptyChar();
-                    if (c != ':')
+                    _input.MoveToNextNonEmptyChar();
+                    if (_input.CurrentChar != ':')
                     {
-                        throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_InvalidObject));
+                        throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_InvalidObject));
                     }
                 }
 
@@ -175,7 +228,7 @@ namespace Microsoft.Framework.Runtime.Json
                     if (memberName == null)
                     {
                         // Move the cursor to the '}' character.
-                        c = _input.GetNextNonEmptyChar();
+                        _input.MoveToNextNonEmptyChar();
                         break;
                     }
                 }
@@ -185,21 +238,21 @@ namespace Microsoft.Framework.Runtime.Json
                 // Deserialize the property value.  Here, we don't know its type
                 object propVal = DeserializeInternal(depth);
                 dictionary[memberName] = propVal;
-                c = _input.GetNextNonEmptyChar();
-                if (c == '}')
+                _input.MoveToNextNonEmptyChar();
+                if (_input.CurrentChar == '}')
                 {
                     break;
                 }
 
-                if (c != ',')
+                if (_input.CurrentChar != ',')
                 {
-                    throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_InvalidObject));
+                    throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_InvalidObject));
                 }
             }
 
-            if (c != '}')
+            if (_input.CurrentChar != '}')
             {
-                throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_InvalidObject));
+                throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_InvalidObject));
             }
 
             return dictionary;
@@ -212,12 +265,12 @@ namespace Microsoft.Framework.Runtime.Json
         private string DeserializeMemberName()
         {
             // It could be double quoted, single quoted, or not quoted at all
-            var c = _input.GetNextNonEmptyChar();
-            if (c == null)
+            if (!_input.MoveToNextNonEmptyChar())
             {
                 return null;
             }
 
+            var c = _input.CurrentChar;
             _input.MovePrev();
 
             // If it's quoted, treat it as a string
@@ -306,14 +359,13 @@ namespace Microsoft.Framework.Runtime.Json
         private string DeserializePrimitiveToken()
         {
             var sb = new StringBuilder();
-            char? c = null;
-            while ((c = _input.MoveNext()) != null)
-            {
-                if (Char.IsLetterOrDigit(c.Value) || c.Value == '.' ||
-                    c.Value == '-' || c.Value == '_' || c.Value == '+')
-                {
 
-                    sb.Append(c.Value);
+            while (_input.MoveNext())
+            {
+                var c = _input.CurrentChar;
+                if (char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_' || c == '+')
+                {
+                    sb.Append(c);
                 }
                 else
                 {
@@ -330,13 +382,13 @@ namespace Microsoft.Framework.Runtime.Json
             var sb = new StringBuilder();
             var escapedChar = false;
 
-            var c = _input.MoveNext();
+            _input.MoveNext();
 
             // First determine which quote is used by the string.
-            var quoteChar = CheckQuoteChar(c);
-            while ((c = _input.MoveNext()) != null)
+            var quoteChar = CheckQuoteChar(_input.CurrentChar);
+            while (_input.MoveNext())
             {
-                if (c == '\\')
+                if (_input.CurrentChar == '\\')
                 {
                     if (escapedChar)
                     {
@@ -353,21 +405,21 @@ namespace Microsoft.Framework.Runtime.Json
 
                 if (escapedChar)
                 {
-                    AppendCharToBuilder(c, sb);
+                    AppendCharToBuilder(_input.CurrentChar, sb);
                     escapedChar = false;
                 }
                 else
                 {
-                    if (c == quoteChar)
+                    if (_input.CurrentChar == quoteChar)
                     {
                         return Utf16StringValidator.ValidateString(sb.ToString());
                     }
 
-                    sb.Append(c.Value);
+                    sb.Append(_input.CurrentChar);
                 }
             }
 
-            throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_UnterminatedString));
+            throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_UnterminatedString));
         }
 
         private void AppendCharToBuilder(char? c, StringBuilder sb)
@@ -398,25 +450,32 @@ namespace Microsoft.Framework.Runtime.Json
             }
             else if (c == 'u')
             {
-                sb.Append((char)int.Parse(_input.MoveNext(4), NumberStyles.HexNumber, CultureInfo.InvariantCulture));
+                var c4 = new char[4];
+                for (int i = 0; i < 4; ++i)
+                {
+                    _input.MoveNext();
+                    c4[i] = _input.CurrentChar;
+                }
+
+                sb.Append((char)int.Parse(new string(c4), NumberStyles.HexNumber, CultureInfo.InvariantCulture));
             }
             else
             {
-                throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_BadEscape));
+                throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_BadEscape));
             }
         }
 
-        private char CheckQuoteChar(char? c)
+        private char CheckQuoteChar(char c)
         {
             var quoteChar = '"';
             if (c == '\'')
             {
-                quoteChar = c.Value;
+                quoteChar = c;
             }
             else if (c != '"')
             {
                 // Fail if the string is not quoted.
-                throw new ArgumentException(_input.GetDebugString(JsonDeserializerResource.JSON_StringNotQuoted));
+                throw new ArgumentException(_input.GetStatusInfo(JsonDeserializerResource.JSON_StringNotQuoted));
             }
 
             return quoteChar;

@@ -166,8 +166,7 @@ namespace Microsoft.Framework.Runtime
             var project = new Project();
 
             var deserializer = new JsonDeserializer();
-            var streamReader = new StreamReader(stream);
-            var projectContentDictionary = deserializer.Deserialize(streamReader.ReadToEnd()) as IDictionary<string, object>;
+            var projectContentDictionary = deserializer.Deserialize(stream) as IDictionary<string, object>;
 
             if (projectContentDictionary == null)
             {

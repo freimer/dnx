@@ -1,13 +1,11 @@
 // Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Collections.Generic;
-using Microsoft.Framework.Runtime.Json;
-using Xunit;
+using System;
 using System.IO;
 using System.Text;
-using System;
-using System.Diagnostics;
+using Microsoft.Framework.Runtime.Json;
+using Xunit;
 
 namespace Microsoft.Framework.Runtime.Tests
 {
@@ -56,7 +54,7 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             using (var mem = CreateStreamFromContent(TestContent))
             {
-                var content = new JsonContent(mem);
+                var content = JsonContent.CreateFromStream(mem);
                 Assert.Equal(37, content.TotalLines);
             }
         }
@@ -66,7 +64,7 @@ namespace Microsoft.Framework.Runtime.Tests
         {
             using (var mem = CreateStreamFromContent("{}"))
             {
-                var content = new JsonContent(mem);
+                var content = JsonContent.CreateFromStream(mem);
                 Assert.Equal(1, content.TotalLines);
 
                 Assert.True(content.MoveToNextNonEmptyChar());
@@ -91,7 +89,7 @@ namespace Microsoft.Framework.Runtime.Tests
     ""switch"": true
 }"))
             {
-                var content = new JsonContent(mem);
+                var content = JsonContent.CreateFromStream(mem);
                 Assert.Equal(4, content.TotalLines);
 
                 Assert.True(content.MoveToNextNonEmptyChar());
@@ -161,7 +159,7 @@ jl m n
 ";
             using (var mem = CreateStreamFromContent(raw))
             {
-                var content = new JsonContent(mem);
+                var content = JsonContent.CreateFromStream(mem);
                 Assert.False(content.Started);
 
                 Assert.True(content.MoveNext());
@@ -236,17 +234,30 @@ jl m n
 ";
             using (var mem = CreateStreamFromContent(raw))
             {
-                var content = new JsonContent(mem);
+                var content = JsonContent.CreateFromStream(mem);
                 Assert.False(content.Started);
 
+                Assert.Equal(0, content.CurrentLine);
+                Assert.Equal(-1, content.CurrentPosition);
+
                 Assert.False(content.MovePrev());
+                Assert.Equal(0, content.CurrentLine);
+                Assert.Equal(-1, content.CurrentPosition);
+
                 Assert.True(content.MoveNext());
-                Assert.False(content.MovePrev());
                 Assert.Equal(0, content.CurrentLine);
                 Assert.Equal(0, content.CurrentPosition);
 
+                Assert.True(content.MovePrev());
+                Assert.Equal(0, content.CurrentLine);
+                Assert.Equal(-1, content.CurrentPosition);
+
+                Assert.False(content.MovePrev());
+                Assert.Equal(0, content.CurrentLine);
+                Assert.Equal(-1, content.CurrentPosition);
+
                 // Move to the end
-                Repeat(20, () => Assert.True(content.MoveNext()));
+                Repeat(21, () => Assert.True(content.MoveNext()));
                 Assert.False(content.MoveNext());
 
                 Assert.True(content.MovePrev());
@@ -280,7 +291,13 @@ jl m n
                 Assert.Equal(0, content.CurrentLine);
                 Assert.Equal(0, content.CurrentPosition);
 
+                Assert.True(content.MovePrev());
+                Assert.Equal(0, content.CurrentLine);
+                Assert.Equal(-1, content.CurrentPosition);
+
                 Assert.False(content.MovePrev());
+                Assert.Equal(0, content.CurrentLine);
+                Assert.Equal(-1, content.CurrentPosition);
             }
         }
 
