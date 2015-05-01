@@ -145,13 +145,13 @@ namespace Microsoft.Framework.Runtime.Tests
         }
 
         [Fact]
-        public void MoveToNext()
+        public void MoveNextWorksCorrectly()
         {
-            var raw = 
+            var raw =
 @"a
-bc
+bc    
 def
-
+ 
 fg
 h
 
@@ -161,14 +161,140 @@ jl m n
 ";
             using (var mem = CreateStreamFromContent(raw))
             {
-                var content = 
-                
+                var content = new JsonContent(mem);
+                Assert.False(content.Started);
+
+                Assert.True(content.MoveNext());
+                Assert.True(content.Started);
+                Assert.Equal('a', content.CurrentChar);
+                Assert.Equal(0, content.CurrentLine);
+                Assert.Equal(0, content.CurrentPosition);
+
+                Assert.True(content.MoveNext());
+                Assert.Equal('b', content.CurrentChar);
+                Assert.Equal(1, content.CurrentLine);
+                Assert.Equal(0, content.CurrentPosition);
+
+                Assert.True(content.MoveNext());
+                Assert.Equal('c', content.CurrentChar);
+                Assert.Equal(1, content.CurrentLine);
+                Assert.Equal(1, content.CurrentPosition);
+
+                Assert.True(content.MoveNext());
+                Assert.Equal(' ', content.CurrentChar);
+                Assert.Equal(1, content.CurrentLine);
+                Assert.Equal(2, content.CurrentPosition);
+
+                Repeat(4, () => Assert.True(content.MoveNext()));
+                Assert.Equal('d', content.CurrentChar);
+                Assert.Equal(2, content.CurrentLine);
+                Assert.Equal(0, content.CurrentPosition);
+
+                Repeat(3, () => Assert.True(content.MoveNext()));
+                Assert.Equal(' ', content.CurrentChar);
+                Assert.Equal(3, content.CurrentLine);
+                Assert.Equal(0, content.CurrentPosition);
+
+                Repeat(4, () => Assert.True(content.MoveNext()));
+                Assert.Equal('i', content.CurrentChar);
+                Assert.Equal(8, content.CurrentLine);
+                Assert.Equal(0, content.CurrentPosition);
+
+                Repeat(5, () => Assert.True(content.MoveNext()));
+                Assert.Equal(' ', content.CurrentChar);
+                Assert.Equal(9, content.CurrentLine);
+                Assert.Equal(4, content.CurrentPosition);
+
+                Assert.True(content.MoveNext());
+                Assert.Equal('n', content.CurrentChar);
+                Assert.Equal(9, content.CurrentLine);
+                Assert.Equal(5, content.CurrentPosition);
+
+                Assert.False(content.MoveNext());
+
+                // Cursor doesn't move
+                Assert.Equal('n', content.CurrentChar);
+                Assert.Equal(9, content.CurrentLine);
+                Assert.Equal(5, content.CurrentPosition);
+            }
+        }
+
+        [Fact]
+        public void MovePrevWorksCorrectly()
+        {
+            var raw =
+@"a
+bc    
+def
+ 
+fg
+h
+
+
+i
+jl m n
+";
+            using (var mem = CreateStreamFromContent(raw))
+            {
+                var content = new JsonContent(mem);
+                Assert.False(content.Started);
+
+                Assert.False(content.MovePrev());
+                Assert.True(content.MoveNext());
+                Assert.False(content.MovePrev());
+                Assert.Equal(0, content.CurrentLine);
+                Assert.Equal(0, content.CurrentPosition);
+
+                // Move to the end
+                Repeat(20, () => Assert.True(content.MoveNext()));
+                Assert.False(content.MoveNext());
+
+                Assert.True(content.MovePrev());
+                Assert.Equal(' ', content.CurrentChar);
+                Assert.Equal(9, content.CurrentLine);
+                Assert.Equal(4, content.CurrentPosition);
+
+                Repeat(5, () => Assert.True(content.MovePrev()));
+                Assert.Equal('i', content.CurrentChar);
+                Assert.Equal(8, content.CurrentLine);
+                Assert.Equal(0, content.CurrentPosition);
+
+                Assert.True(content.MovePrev());
+                Assert.Equal('h', content.CurrentChar);
+                Assert.Equal(5, content.CurrentLine);
+                Assert.Equal(0, content.CurrentPosition);
+
+                Repeat(7, () => Assert.True(content.MovePrev()));
+                Assert.Equal(' ', content.CurrentChar);
+                Assert.Equal(1, content.CurrentLine);
+                Assert.Equal(5, content.CurrentPosition);
+
+                Repeat(3, () =>
+                {
+                    Assert.True(content.MovePrev());
+                    Assert.Equal(' ', content.CurrentChar);
+                });
+
+                Repeat(3, () => Assert.True(content.MovePrev()));
+                Assert.Equal('a', content.CurrentChar);
+                Assert.Equal(0, content.CurrentLine);
+                Assert.Equal(0, content.CurrentPosition);
+
+                Assert.False(content.MovePrev());
             }
         }
 
         private MemoryStream CreateStreamFromContent(string content)
         {
             return new MemoryStream(Encoding.UTF8.GetBytes(content));
+        }
+
+        private void Repeat(int count, Action action)
+        {
+            for (int i = 0; i < count; ++i)
+            {
+                action();
+            }
         }
     }
 }

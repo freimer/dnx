@@ -15,8 +15,8 @@ namespace Microsoft.Framework.Runtime.Json
         private List<string> _content = new List<string>();
 
         /// <summary>
-		/// Create a JsonContent instance from a stream.
-		/// The consumer is responsible of manage the stream's lifecycle
+        /// Create a JsonContent instance from a stream.
+        /// The consumer is responsible of manage the stream's lifecycle
         /// </summary>
         /// <param name="stream">Content source</param>
         public JsonContent(Stream stream)
@@ -50,6 +50,16 @@ namespace Microsoft.Framework.Runtime.Json
         public bool ValidCursor
         {
             get { return (_content.Count > CurrentLine) && (_content[CurrentLine].Length > CurrentPosition); }
+        }
+
+        public bool IsCurrentNonEmptyChar
+        {
+            get { return char.IsWhiteSpace(_content[CurrentChar][CurrentPosition]) == false; }
+        }
+
+        public bool Started
+        {
+            get { return CurrentLine != 0 || CurrentPosition != -1; }
         }
 
         /// <summary>
