@@ -144,6 +144,28 @@ namespace Microsoft.Framework.Runtime.Tests
             }
         }
 
+        [Fact]
+        public void MoveToNext()
+        {
+            var raw = 
+@"a
+bc
+def
+
+fg
+h
+
+
+i
+jl m n
+";
+            using (var mem = CreateStreamFromContent(raw))
+            {
+                var content = 
+                
+            }
+        }
+
         private MemoryStream CreateStreamFromContent(string content)
         {
             return new MemoryStream(Encoding.UTF8.GetBytes(content));

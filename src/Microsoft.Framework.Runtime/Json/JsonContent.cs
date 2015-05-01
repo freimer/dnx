@@ -55,7 +55,7 @@ namespace Microsoft.Framework.Runtime.Json
         /// <summary>
         /// Move the cursor to the next non empty char
         /// </summary>
-        /// <returns>Returns false if the cursor reach end of the content</returns>
+        /// <returns>Returns false if the cursor reach the end of the content.</returns>
         public bool MoveToNextNonEmptyChar()
         {
             while (TotalLines > CurrentLine)
@@ -76,15 +76,69 @@ namespace Microsoft.Framework.Runtime.Json
             return false;
         }
 
-        //public char? MoveNext()
-        //{
+        /// <summary>
+        /// Move the cursor to the next char
+        /// </summary>
+        /// <returns>Returns false if the cursor reach the end of the content.</returns>
+        public bool MoveNext()
+        {
+            if (CurrentPosition + 1 < _content[CurrentLine].Length)
+            {
+                CurrentPosition += 1;
+                return true;
+            }
+            else
+            {
+                // find the first non empty line after current line
+                var targetLine = CurrentLine;
+                while (++targetLine < TotalLines && _content[targetLine].Length == 0)
+                {
+                }
 
-        //    throw new NotImplementedException();
-        //}
+                if (targetLine >= TotalLines)
+                {
+                    return false;
+                }
+                else
+                {
+                    CurrentLine = targetLine;
+                    CurrentPosition = 0;
+                    return true;
+                }
+            }
+        }
 
-        //public char? MovePrev()
-        //{
-        //    throw new NotImplementedException();
-        //}
+        /// <summary>
+        /// Move the cursor to the previous char
+        /// </summary>
+        /// <returns>Returns false </returns>
+        public bool MovePrev()
+        {
+            if (CurrentPosition - 1 >= 0)
+            {
+                CurrentPosition -= 1;
+                return true;
+            }
+            else
+            {
+                var targetLine = CurrentLine;
+
+                // find the first non empty line before current line
+                while (--targetLine >= 0 && _content[targetLine].Length == 0)
+                {
+                }
+
+                if (targetLine < 0)
+                {
+                    return false;
+                }
+                else
+                {
+                    CurrentLine = targetLine;
+                    CurrentPosition = _content[CurrentLine].Length - 1;
+                    return true;
+                }
+            }
+        }
     }
 }
