@@ -175,13 +175,13 @@ namespace Microsoft.Framework.Runtime
                 throw new FileFormatException("Failed to parse project.json");
             }
 
-            var rawProject2 = new JsonObject(projectContentDictionary);
+            var rawProject = new JsonObject(projectContentDictionary);
 
             // Meta-data properties
             project.Name = projectName;
             project.ProjectFilePath = Path.GetFullPath(projectPath);
 
-            project.Version = rawProject2.ValueAs<SemanticVersion>("version", versionInObject =>
+            project.Version = rawProject.ValueAs<SemanticVersion>("version", versionInObject =>
             {
                 var version = versionInObject as string;
                 if (version == null)
@@ -226,24 +226,24 @@ namespace Microsoft.Framework.Runtime
                 }
             }
 
-            project.Description = rawProject2.ValueAsString("description");
-            project.Summary = rawProject2.ValueAsString("summary");
-            project.Copyright = rawProject2.ValueAsString("copyright");
-            project.Title = rawProject2.ValueAsString("title");
-            project.WebRoot = rawProject2.ValueAsString("webroot");
-            project.EntryPoint = rawProject2.ValueAsString("entryPoint");
-            project.ProjectUrl = rawProject2.ValueAsString("projectUrl");
-            project.LicenseUrl = rawProject2.ValueAsString("licenseUrl");
-            project.IconUrl = rawProject2.ValueAsString("iconUrl");
+            project.Description = rawProject.ValueAsString("description");
+            project.Summary = rawProject.ValueAsString("summary");
+            project.Copyright = rawProject.ValueAsString("copyright");
+            project.Title = rawProject.ValueAsString("title");
+            project.WebRoot = rawProject.ValueAsString("webroot");
+            project.EntryPoint = rawProject.ValueAsString("entryPoint");
+            project.ProjectUrl = rawProject.ValueAsString("projectUrl");
+            project.LicenseUrl = rawProject.ValueAsString("licenseUrl");
+            project.IconUrl = rawProject.ValueAsString("iconUrl");
 
-            project.Authors = rawProject2.ValueAsArray<string>("authors") ?? new string[] { };
-            project.Owners = rawProject2.ValueAsArray<string>("owners") ?? new string[] { };
-            project.Tags = rawProject2.ValueAsArray<string>("tags") ?? new string[] { };
+            project.Authors = rawProject.ValueAsArray<string>("authors") ?? new string[] { };
+            project.Owners = rawProject.ValueAsArray<string>("owners") ?? new string[] { };
+            project.Tags = rawProject.ValueAsArray<string>("tags") ?? new string[] { };
 
-            project.RequireLicenseAcceptance = rawProject2.ValueAsBoolean("requireLicenseAcceptance", defaultValue: false);
-            project.IsLoadable = rawProject2.ValueAsBoolean("loadable", defaultValue: true);
+            project.RequireLicenseAcceptance = rawProject.ValueAsBoolean("requireLicenseAcceptance", defaultValue: false);
+            project.IsLoadable = rawProject.ValueAsBoolean("loadable", defaultValue: true);
             // TODO: Move this to the dependencies node
-            project.EmbedInteropTypes = rawProject2.ValueAsBoolean("embedInteropTypes", defaultValue: false);
+            project.EmbedInteropTypes = rawProject.ValueAsBoolean("embedInteropTypes", defaultValue: false);
 
             project.Dependencies = new List<LibraryDependency>();
 
@@ -253,7 +253,7 @@ namespace Microsoft.Framework.Runtime
                                                        project.ProjectFilePath,
                                                        diagnostics);
 
-            var compilerInfo = rawProject2.ValueAsJsonObject("compiler");
+            var compilerInfo = rawProject.ValueAsJsonObject("compiler");
             if (compilerInfo != null)
             {
                 var languageName = compilerInfo.ValueAsString("name") ?? "C#";
@@ -264,7 +264,7 @@ namespace Microsoft.Framework.Runtime
                 project.CompilerServices = new CompilerServices(languageName, compiler);
             }
 
-            project.Commands = rawProject2.ValueAs<IDictionary<string, string>>("commands", value =>
+            project.Commands = rawProject.ValueAs<IDictionary<string, string>>("commands", value =>
             {
                 var dict = value as IDictionary<string, object>;
                 if (dict != null)
@@ -280,7 +280,7 @@ namespace Microsoft.Framework.Runtime
                 }
             });
 
-            project.Scripts = rawProject2.ValueAs<IDictionary<string, IEnumerable<string>>>("scripts", value =>
+            project.Scripts = rawProject.ValueAs<IDictionary<string, IEnumerable<string>>>("scripts", value =>
             {
                 var dict = value as IDictionary<string, object>;
                 if (dict != null)
@@ -319,12 +319,12 @@ namespace Microsoft.Framework.Runtime
                 }
             });
 
-            project.BuildTargetFrameworksAndConfigurations(rawProject2);
+            project.BuildTargetFrameworksAndConfigurations(rawProject);
 
             PopulateDependencies(
                 project.ProjectFilePath,
                 project.Dependencies,
-                rawProject2,
+                rawProject,
                 "dependencies",
                 isGacOrFrameworkReference: false);
 
