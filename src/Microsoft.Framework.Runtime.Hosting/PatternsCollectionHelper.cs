@@ -30,10 +30,11 @@ namespace Microsoft.Framework.Runtime
                     return CreateCollection(projectDirectory, valueInString);
                 }
 
-                string[] valuesInArray = rawProject.ValueAsArray<string>(propertyName);
+                // TODO: simplify after introduce JsonArray
+                string[] valuesInArray = rawProject.ValueAsStringArray(propertyName);
                 if (valuesInArray != null)
                 {
-                    return CreateCollection(projectDirectory, valuesInArray);
+                    return CreateCollection(projectDirectory, valuesInArray.Select(s => s.ToString()).ToArray());
                 }
             }
             catch (Exception ex)

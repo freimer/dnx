@@ -261,7 +261,7 @@ namespace Microsoft.Framework.Runtime.Json
             // If it's quoted, treat it as a string
             if (IsNextElementString(c))
             {
-                return DeserializeString();
+                return DeserializeString().ToString();
             }
 
             // Non-quoted token
@@ -362,7 +362,7 @@ namespace Microsoft.Framework.Runtime.Json
             return sb.ToString();
         }
 
-        private string DeserializeString()
+        private JsonString DeserializeString()
         {
             var sb = new StringBuilder();
             var escapedChar = false;
@@ -397,7 +397,7 @@ namespace Microsoft.Framework.Runtime.Json
                 {
                     if (_input.CurrentChar == quoteChar)
                     {
-                        return Utf16StringValidator.ValidateString(sb.ToString());
+                        return new JsonString(Utf16StringValidator.ValidateString(sb.ToString()));
                     }
 
                     sb.Append(_input.CurrentChar);

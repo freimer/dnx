@@ -67,9 +67,9 @@ namespace Microsoft.Framework.Runtime.Json
             });
         }
 
-        public string ValueAsString(string key)
+        public JsonString ValueAsString(string key)
         {
-            return ValueAs(key, value => value as string);
+            return ValueAs(key, value => value as JsonString);
         }
 
         public bool ValueAsBoolean(string key, bool defaultValue = false)
@@ -105,9 +105,53 @@ namespace Microsoft.Framework.Runtime.Json
             return ValueAs(key, value => (value as IList<object>)?.ToArray());
         }
 
-        public T[] ValueAsArray<T>(string key)
+        //public T[] ValueAsArray<T>(string key)
+        //{
+        //    return ValueAs(key, value =>
+        //    {
+        //        var list = value as IList<object>;
+        //        if (list == null)
+        //        {
+        //            return null;
+        //        }
+        //        else
+        //        {
+        //            // bad...
+        //            var result = new List<T>();
+        //            foreach (var each in list)
+        //            {
+        //                result.Add((T)each);
+        //            }
+
+        //            return result.ToArray();
+        //        }
+        //    });
+        //}
+
+        public string[] ValueAsStringArray(string key)
         {
-            return ValueAs(key, value => (value as IList<object>)?.Cast<T>().ToArray());
+            return ValueAs(key, value =>
+            {
+                var list = value as IList<object>;
+                if (list == null)
+                {
+                    return null;
+                }
+
+                if (list.Count == 0)
+                {
+                    return new string[] { };
+                }
+
+                if (list.First() is JsonString)
+                {
+                    return list.Select(each => (each as JsonString).ToString()).ToArray();
+                }
+                else
+                {
+                    return null;
+                }
+            });
         }
     }
 }

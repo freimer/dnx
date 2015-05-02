@@ -46,9 +46,9 @@ namespace Microsoft.Framework.Runtime.Tests
             var list = raw as IList<object>;
             Assert.NotNull(list);
             Assert.Equal(3, list.Count);
-            Assert.Equal("a", (string)list[0]);
-            Assert.Equal("b", (string)list[1]);
-            Assert.Equal("c", (string)list[2]);
+            Assert.Equal("a", list[0].ToString());
+            Assert.Equal("b", list[1].ToString());
+            Assert.Equal("c", list[2].ToString());
         }
 
         [Fact]
@@ -76,18 +76,18 @@ namespace Microsoft.Framework.Runtime.Tests
             Assert.Equal(99, (int)dict.Value("key2"));
             Assert.Equal(true, dict.ValueAsBoolean("key3"));
 
-            var list = dict.ValueAs<IList<object>>("key4");
+            var list = dict.ValueAsStringArray("key4");
             Assert.NotNull(list);
-            Assert.Equal(3, list.Count);
-            Assert.Equal("str1", (string)list[0]);
-            Assert.Equal("str2", (string)list[1]);
-            Assert.Equal("str3", (string)list[2]);
+            Assert.Equal(3, list.Length);
+            Assert.Equal("str1", list[0]);
+            Assert.Equal("str2", list[1]);
+            Assert.Equal("str3", list[2]);
 
             var jobject = dict.ValueAsJsonObject("key5"); //dict["key5"] as IDictionary<string, object>;
             Assert.NotNull(jobject);
             Assert.Equal("subvalue1", jobject.ValueAsString("subkey1"));
 
-            var subArray = jobject.ValueAsArray<int>("subkey2");
+            var subArray = jobject.ValueAsArray("subkey2");
             Assert.NotNull(subArray);
             Assert.Equal(2, subArray.Length);
             Assert.Equal(1, (int)subArray[0]);

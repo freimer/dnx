@@ -13,48 +13,43 @@ namespace Microsoft.Framework.Runtime.Json
 
     internal class JsonToken : JsonPosition
     {
-        public int Column
+        public JsonToken()
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            Line = 0;
+            Column = 0;
         }
 
-        public int Line
+        public JsonToken(int line, int column)
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            Line = line;
+            Column = column;
         }
+
+        public int Line { get; private set; }
+
+        public int Column { get; private set; }
     }
 
     internal class JsonUnit : JsonPosition
     {
-        public int Column
+        public JsonUnit()
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            Line = 0;
+            Column = 0;
         }
 
-        public int Line
+        public JsonUnit(int line, int column)
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            Line = line;
+            Column = column;
         }
+
+        public int Line { get; private set; }
+
+        public int Column { get; private set; }
     }
 
     internal class JsonPrimitive : JsonUnit
-    {
-
-    }
-
-    internal class JsonArray : JsonUnit
     {
 
     }

@@ -33,7 +33,7 @@ namespace Microsoft.Framework.Runtime
                     throw new FileFormatException("Value must be string.");
                 }
 
-                if (resourcePath.Contains("*"))
+                if (resourcePath.ToString().Contains("*"))
                 {
                     throw new FileFormatException("Value cannot contain wildcards.");
                 }

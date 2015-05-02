@@ -180,7 +180,7 @@ namespace Microsoft.Framework.Runtime
 
             project.Version = rawProject.ValueAs<SemanticVersion>("version", versionInObject =>
             {
-                var version = versionInObject as string;
+                var version = versionInObject as JsonString;
                 if (version == null)
                 {
                     return new SemanticVersion("1.0.0");
@@ -233,9 +233,9 @@ namespace Microsoft.Framework.Runtime
             project.LicenseUrl = rawProject.ValueAsString("licenseUrl");
             project.IconUrl = rawProject.ValueAsString("iconUrl");
 
-            project.Authors = rawProject.ValueAsArray<string>("authors") ?? new string[] { };
-            project.Owners = rawProject.ValueAsArray<string>("owners") ?? new string[] { };
-            project.Tags = rawProject.ValueAsArray<string>("tags") ?? new string[] { };
+            project.Authors = rawProject.ValueAsStringArray("authors") ?? new string[] { };
+            project.Owners = rawProject.ValueAsStringArray("owners") ?? new string[] { };
+            project.Tags = rawProject.ValueAsStringArray("tags") ?? new string[] { };
 
             project.RequireLicenseAcceptance = rawProject.ValueAsBoolean("requireLicenseAcceptance", defaultValue: false);
             project.IsLoadable = rawProject.ValueAsBoolean("loadable", defaultValue: true);
@@ -296,7 +296,7 @@ namespace Microsoft.Framework.Runtime
                             result[key] = new string[] { stringValue };
                         }
 
-                        var arrayValue = jsonObject.ValueAsArray<string>(key);
+                        var arrayValue = jsonObject.ValueAsStringArray(key);
                         if (arrayValue != null)
                         {
                             result[key] = arrayValue;
@@ -367,13 +367,10 @@ namespace Microsoft.Framework.Runtime
                     //    "Name" : "1.0"
                     // }
 
-                    //var dependencyValue = dependency.Value;
                     var dependencyTypeValue = LibraryDependencyType.Default;
 
-                    //JToken dependencyVersionToken = dependencyValue;
-
-                    string dependencyVersionValue = dependencies.ValueAsString(dependencyKey);
-                    if (dependencyVersionValue == null)
+                    var dependencyVersionString = dependencies.ValueAsString(dependencyKey);
+                    if (dependencyVersionString == null)
                     {
                         var versionStructure = dependencies.ValueAsJsonObject(dependencyKey);
                         if (versionStructure == null)
@@ -382,7 +379,7 @@ namespace Microsoft.Framework.Runtime
                             throw new FileFormatException("Unrecoganizable format of dependency version of " + dependencyKey);
                         }
 
-                        dependencyVersionValue = versionStructure.ValueAsString("version");
+                        dependencyVersionString = versionStructure.ValueAsString("version");
 
                         IEnumerable<string> strings;
                         if (TryGetStringEnumerable(versionStructure, "type", out strings))
@@ -393,15 +390,15 @@ namespace Microsoft.Framework.Runtime
 
                     SemanticVersionRange dependencyVersionRange = null;
 
-                    if (!string.IsNullOrEmpty(dependencyVersionValue))
+                    if (!string.IsNullOrEmpty(dependencyVersionString))
                     {
                         try
                         {
-                            dependencyVersionRange = VersionUtility.ParseVersionRange(dependencyVersionValue);
+                            dependencyVersionRange = VersionUtility.ParseVersionRange(dependencyVersionString);
                         }
                         catch (Exception /*ex*/)
                         {
-                            throw new FieldAccessException("Failed to parse version range from: " + dependencyVersionValue);
+                            throw new FieldAccessException("Failed to parse version range from: " + dependencyVersionString);
                             //throw FileFormatException.Create(
                             //    ex,
                             //    dependencyVersionToken,
@@ -439,7 +436,7 @@ namespace Microsoft.Framework.Runtime
             }
             else
             {
-                var valueInArray = parent.ValueAsArray<string>(property);
+                var valueInArray = parent.ValueAsStringArray(property);
                 if (valueInArray != null)
                 {
                     collection.AddRange(valueInArray);
@@ -674,7 +671,7 @@ namespace Microsoft.Framework.Runtime
 
             return new CompilerOptions
             {
-                Defines = rawOptions.ValueAsArray<string>("define"),
+                Defines = rawOptions.ValueAsStringArray("define"),
                 LanguageVersion = rawOptions.ValueAsString("languageVersion"),
                 AllowUnsafe = rawOptions.ValueAsNullableBoolean("allowUnsafe"),
                 Platform = rawOptions.ValueAsString("platform"),
